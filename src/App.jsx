@@ -139,7 +139,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 // --- CONFIGURATION ---
-// const GITHUB_TOKEN = "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"; 
+
 const REPO_OWNER = "Mshandev";
 const REPO_NAME = "Food-Delivery";
 
