@@ -347,16 +347,16 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  // --- Configuration State ---
+  // --- Configuration & UI State ---
   const [config, setConfig] = useState({ token: '', owner: '' });
   const [isConnected, setIsConnected] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); // Added search state
   
   const [repoList, setRepoList] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoData, setRepoData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 1. Fetch repos ONLY when the user clicks 'Connect'
   const handleConnect = () => {
     if (!config.token || !config.owner) {
       alert("Please enter both Owner name and Personal Access Token.");
@@ -387,7 +387,6 @@ function App() {
     setSelectedRepo(repoName);
     
     try {
-      // Passing user-provided config to your FastAPI backend
       const response = await fetch(
         `http://localhost:8000/tree?owner=${config.owner}&repo=${repoName}&token=${config.token}`
       );
@@ -395,11 +394,14 @@ function App() {
       
       const processed = {};
       data.tree.forEach(node => {
-        processed[node.name] = {
-          status: node.status || "success",
-          items: node.children ? node.children.map(c => c.name) : [],
-          lastUpdated: node.last_modified || new Date().toISOString()
-        };
+        if (node.type === "tree") {
+          processed[node.name] = {
+            status: node.status || "success",
+            // Store full child objects to access their nested children later
+            children: node.children || [], 
+            lastUpdated: node.last_modified || new Date().toISOString()
+          };
+        }
       });
 
       setRepoData(processed);
@@ -409,6 +411,11 @@ function App() {
       setLoading(false);
     }
   };
+
+  // Filter repos based on search input
+  const filteredRepos = repoList.filter(repo => 
+    repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // --- VIEW 1: CONFIGURATION / LANDING PAGE ---
   if (!selectedRepo) {
@@ -420,7 +427,7 @@ function App() {
           <div className="config-form">
             <input 
               type="text" 
-              placeholder="GitHub Owner (e.g. AmoghNexTurn)" 
+              placeholder="GitHub Owner" 
               value={config.owner}
               onChange={(e) => setConfig({...config, owner: e.target.value})}
             />
@@ -438,13 +445,28 @@ function App() {
               <p>Connected as: <strong>{config.owner}</strong></p>
               <button className="small-btn" onClick={() => setIsConnected(false)}>Change User</button>
             </div>
+
+            <div className="search-container">
+              <input 
+                type="text" 
+                placeholder="Search repositories..." 
+                className="search-bar"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
             <div className="repo-list">
-              {repoList.map(repo => (
-                <div key={repo.id} className="repo-card" onClick={() => handleSelectRepo(repo.name)}>
-                  <h3>{repo.name}</h3>
-                  <p>{repo.description || "No description provided."}</p>
-                </div>
-              ))}
+              {filteredRepos.length > 0 ? (
+                filteredRepos.map(repo => (
+                  <div key={repo.id} className="repo-card" onClick={() => handleSelectRepo(repo.name)}>
+                    <h3>{repo.name}</h3>
+                    <p>{repo.description || "No description provided."}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="no-results">No repositories found matching "{searchQuery}"</p>
+              )}
             </div>
           </>
         )}
@@ -452,33 +474,50 @@ function App() {
     );
   }
 
-  // --- VIEW 2: DASHBOARD (Existing logic) ---
+  // --- VIEW 2: DASHBOARD ---
   if (loading) return <div className="dashboard"><h1>Processing Data...</h1></div>;
 
   return (
     <div className="dashboard">
-       <button className="back-btn" onClick={() => {setSelectedRepo(null); setRepoData(null);}}>
-         ← Back to Projects
-       </button>
-       <h1 style={{color: '#2c3e50'}}>Dashboard: {selectedRepo}</h1>
-       <div className="grid">
-         {repoData && Object.entries(repoData).map(([name, info]) => (
-           <div key={name} className={`card ${info.status}`}>
-              <div className="card-header">
-                <h2>{name}</h2>
-                <span className={`status-indicator pulse ${info.status}`}></span>
-              </div>
-              <ul className="item-list">
-                {info.items.slice(0, 5).map((item, i) => (
-                  <li key={i}><input type="checkbox" /> {item}</li>
-                ))}
-              </ul>
-              <div className="activity">
-                <small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small>
-              </div>
-           </div>
-         ))}
-       </div>
+        <button className="back-btn" onClick={() => {setSelectedRepo(null); setRepoData(null); setSearchQuery("");}}>
+          ← Back to Projects
+        </button>
+        <h1>Dashboard: {selectedRepo}</h1>
+        <div className="grid">
+          {repoData && Object.entries(repoData).map(([name, info]) => (
+            <div key={name} className={`card ${info.status}`}>
+               <div className="card-header">
+                 <h2>{name}</h2>
+                 <span className={`status-indicator pulse ${info.status}`}></span>
+               </div>
+               
+               <ul className="item-list">
+                 {info.children.slice(0, 8).map((child, i) => (
+                   <li key={i} className={child.type === 'tree' ? 'has-tooltip' : ''}>
+                     <input type="checkbox" /> 
+                     <span className="item-name">{child.name}</span>
+                     
+                     {/* TOOLTIP: Only renders if the item is a directory with children */}
+                     {child.type === 'tree' && child.children && child.children.length > 0 && (
+                       <div className="tooltip">
+                         <strong>Sub-folder Contents:</strong>
+                         <ul>
+                           {child.children.map((sub, j) => (
+                             <li key={j}>• {sub.name}</li>
+                           ))}
+                         </ul>
+                       </div>
+                     )}
+                   </li>
+                 ))}
+               </ul>
+
+               <div className="activity">
+                 <small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small>
+               </div>
+            </div>
+          ))}
+        </div>
     </div>
   );
 }

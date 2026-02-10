@@ -220,6 +220,7 @@ html, body, #root {
   gap: 10px;
   align-items: center;
   justify-content: center;
+  color: black;
 }
 
 .small-btn {
@@ -229,4 +230,77 @@ html, body, #root {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* Search Bar Styles */
+.search-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 30px;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 25px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Tooltip Logic */
+.has-tooltip {
+  position: relative;
+  cursor: help;
+  color: #007bff !important; /* Highlight directories in blue */
+}
+
+.tooltip {
+  visibility: hidden;
+  position: absolute;
+  left: 105%;
+  top: 0;
+  background-color: #343a40;
+  color: #ffffff !important; /* Base color for text */
+  padding: 12px;
+  border-radius: 8px;
+  width: 220px;
+  z-index: 100;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  font-size: 0.85rem;
+  /* Added a slight fade-in for a smoother feel */
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none; /* Prevents the tooltip from flickering */
+}
+
+.tooltip strong {
+  display: block;
+  color: #007bff; /* Keeps the heading blue and bright */
+  margin-bottom: 8px;
+  border-bottom: 1px solid #495057;
+  padding-bottom: 4px;
+}
+
+.tooltip ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* MODIFIED: This specific rule fixes your black text issue */
+.tooltip ul li {
+  color: #ffffff !important; /* Overrides the #444 global card color */
+  padding: 4px 0;
+  font-size: 0.8rem;
+  border: none; /* Removes any inherited borders */
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Handles very long filenames nicely */
+}
+
+.has-tooltip:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
 }
