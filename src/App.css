@@ -248,7 +248,7 @@ html, body, #root {
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-/* Tooltip Logic */
+/* Tooltip Logic - Reverted to Static Side Positioning */
 .has-tooltip {
   position: relative;
   cursor: help;
@@ -258,25 +258,29 @@ html, body, #root {
 .tooltip {
   visibility: hidden;
   position: absolute;
-  left: 105%;
+  left: 105%; /* Positioned to the right of the text */
   top: 0;
   background-color: #343a40;
-  color: #ffffff !important; /* Base color for text */
+  color: #ffffff !important; 
   padding: 12px;
   border-radius: 8px;
   width: 220px;
-  z-index: 100;
+  z-index: 1000; 
   box-shadow: 0 8px 25px rgba(0,0,0,0.3);
   font-size: 0.85rem;
-  /* Added a slight fade-in for a smoother feel */
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
-  pointer-events: none; /* Prevents the tooltip from flickering */
+  pointer-events: none;
+}
+
+.has-tooltip:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
 }
 
 .tooltip strong {
   display: block;
-  color: #007bff; /* Keeps the heading blue and bright */
+  color: #007bff;
   margin-bottom: 8px;
   border-bottom: 1px solid #495057;
   padding-bottom: 4px;
@@ -288,19 +292,67 @@ html, body, #root {
   margin: 0;
 }
 
-/* MODIFIED: This specific rule fixes your black text issue */
 .tooltip ul li {
-  color: #ffffff !important; /* Overrides the #444 global card color */
+  color: #ffffff !important; /* Fixes the black text issue */
   padding: 4px 0;
   font-size: 0.8rem;
-  border: none; /* Removes any inherited borders */
   display: block;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* Handles very long filenames nicely */
+  text-overflow: ellipsis;
 }
 
-.has-tooltip:hover .tooltip {
-  visibility: visible;
-  opacity: 1;
+.dashboard-controls {
+  width: 100%;
+  max-width: 1600px;
+  display: flex;
+  justify-content: flex-end; /* Aligns the filter to the right */
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.filter-menu {
+  background: white;
+  padding: 8px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #ddd;
+}
+
+.filter-menu label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  margin-right: 10px;
+}
+
+.filter-menu select {
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #007bff;
+  cursor: pointer;
+  background: transparent;
+}
+
+.landing-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 30px;
+  gap: 20px;
+}
+
+.landing-controls .search-container {
+  flex-grow: 1;
+  margin: 0; /* Override previous center margin */
+}
+
+.last-updated {
+  display: block;
+  margin-top: 10px;
+  color: #888;
+  font-size: 0.8rem;
 }

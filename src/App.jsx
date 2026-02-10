@@ -343,6 +343,242 @@
 
 // export default App;
 
+// import React, { useState, useEffect } from 'react';
+// import './App.css';
+
+// function App() {
+//   // --- Configuration & UI State ---
+//   const [config, setConfig] = useState({ token: '', owner: '' });
+//   const [isConnected, setIsConnected] = useState(false);
+//   const [searchQuery, setSearchQuery] = useState(""); // Added search state
+  
+//   const [repoList, setRepoList] = useState([]);
+//   const [selectedRepo, setSelectedRepo] = useState(null);
+//   const [repoData, setRepoData] = useState(null);
+//   const [loading, setLoading] = useState(false);
+
+//   // new filter menu code
+//   const [sortType, setSortType] = useState("alphabetical");
+
+//   // 2. Logic to sort the cards based on the selected filter
+//   const getSortedData = () => {
+//     if (!repoData) return [];
+    
+//     const entries = Object.entries(repoData);
+    
+//     switch (sortType) {
+//       case "alphabetical":
+//         return entries.sort((a, b) => a[0].localeCompare(b[0]));
+//       case "reverse":
+//         return entries.sort((a, b) => b[0].localeCompare(a[0]));
+//       case "recent":
+//         return entries.sort((a, b) => new Date(b[1].lastUpdated) - new Date(a[1].lastUpdated));
+//       default:
+//         return entries;
+//     }
+//   };
+
+//   const handleConnect = () => {
+//     if (!config.token || !config.owner) {
+//       alert("Please enter both Owner name and Personal Access Token.");
+//       return;
+//     }
+    
+//     setLoading(true);
+//     fetch(`https://api.github.com/users/${config.owner}/repos`, {
+//       headers: { Authorization: `token ${config.token}` }
+//     })
+//       .then(res => {
+//         if (!res.ok) throw new Error("Unauthorized or User not found");
+//         return res.json();
+//       })
+//       .then(data => {
+//         setRepoList(data);
+//         setIsConnected(true);
+//         setLoading(false);
+//       })
+//       .catch(err => {
+//         alert(err.message);
+//         setLoading(false);
+//       });
+//   };
+
+//   const handleSelectRepo = async (repoName) => {
+//     setLoading(true);
+//     setSelectedRepo(repoName);
+    
+//     try {
+//       const response = await fetch(
+//         `http://localhost:8000/tree?owner=${config.owner}&repo=${repoName}&token=${config.token}`
+//       );
+//       const data = await response.json();
+      
+//       const processed = {};
+//       data.tree.forEach(node => {
+//         if (node.type === "tree") {
+//           processed[node.name] = {
+//             status: node.status || "success",
+//             // Store full child objects to access their nested children later
+//             children: node.children || [], 
+//             lastUpdated: node.last_modified || new Date().toISOString()
+//           };
+//         }
+//       });
+
+//       setRepoData(processed);
+//       setLoading(false);
+//     } catch (error) {
+//       console.error("Error loading dashboard:", error);
+//       setLoading(false);
+//     }
+//   };
+
+//   // Filter repos based on search input
+//   const filteredRepos = repoList.filter(repo => 
+//     repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+//   );
+
+//   // --- VIEW 1: CONFIGURATION / LANDING PAGE ---
+//   if (!selectedRepo) {
+//     return (
+//       <div className="landing-page">
+//         <h1>GitHub Repo Visualizer</h1>
+        
+//         {!isConnected ? (
+//           <div className="config-form">
+//             <input 
+//               type="text" 
+//               placeholder="GitHub Owner" 
+//               value={config.owner}
+//               onChange={(e) => setConfig({...config, owner: e.target.value})}
+//             />
+//             <input 
+//               type="password" 
+//               placeholder="Personal Access Token" 
+//               value={config.token}
+//               onChange={(e) => setConfig({...config, token: e.target.value})}
+//             />
+//             <button onClick={handleConnect}>Connect to GitHub</button>
+//           </div>
+//         ) : (
+//           <>
+//             <div className="user-info">
+//               <p>Connected as: <strong>{config.owner}</strong></p>
+//               <button className="small-btn" onClick={() => setIsConnected(false)}>Change User</button>
+//             </div>
+
+//             <div className="search-container">
+//               <input 
+//                 type="text" 
+//                 placeholder="Search repositories..." 
+//                 className="search-bar"
+//                 value={searchQuery}
+//                 onChange={(e) => setSearchQuery(e.target.value)}
+//               />
+//             </div>
+
+//             <div className="repo-list">
+//               {filteredRepos.length > 0 ? (
+//                 filteredRepos.map(repo => (
+//                   <div key={repo.id} className="repo-card" onClick={() => handleSelectRepo(repo.name)}>
+//                     <h3>{repo.name}</h3>
+//                     <p>{repo.description || "No description provided."}</p>
+//                   </div>
+//                 ))
+//               ) : (
+//                 <p className="no-results">No repositories found matching "{searchQuery}"</p>
+//               )}
+//             </div>
+//           </>
+//         )}
+//       </div>
+//     );
+//   }
+
+//   // --- VIEW 2: DASHBOARD ---
+//   if (loading) return <div className="dashboard"><h1>Processing Data...</h1></div>;
+
+//   return (
+//     <div className="dashboard">
+//       <div className="dashboard-header-container">
+//         <button 
+//           className="back-btn" 
+//           onClick={() => {setSelectedRepo(null); setRepoData(null); setSearchQuery("");}}
+//         >
+//           ← Back to Projects
+//         </button>
+//         <h1>Dashboard: {selectedRepo}</h1>
+//       </div>
+
+//       {/* ADDED: Sorting Controls */}
+//       <div className="dashboard-controls">
+//         <div className="filter-menu">
+//           <label>Sort By: </label>
+//           <select value={sortType} onChange={(e) => setSortType(e.target.value)}>
+//             <option value="alphabetical">Alphabetical (A-Z)</option>
+//             <option value="reverse">Reverse Alphabetical (Z-A)</option>
+//             <option value="recent">Most Recent</option>
+//           </select>
+//         </div>
+//       </div>
+
+//       <div className="grid">
+//         {/* UPDATED: Mapping over sorted data instead of raw repoData */}
+//         {getSortedData().map(([name, info]) => (
+//           <div 
+//             key={name} 
+//             className={`card ${info.status} ${name === latestCategory ? 'latest-highlight' : ''}`}
+//           >
+//             {name === latestCategory && <span className="recent-badge">RECENT ACTIVITY</span>}
+            
+//             <div className="card-header">
+//               <h2>{name}</h2>
+//               <span className={`status-indicator pulse ${info.status}`}></span>
+//             </div>
+            
+//             <ul className="item-list">
+//               {info.children.slice(0, 8).map((child, i) => (
+//                 <li 
+//                   key={i} 
+//                   className={child.type === 'tree' ? 'has-tooltip' : ''}
+//                   onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+//                 >
+//                   <input type="checkbox" /> 
+//                   <span className="item-name">{child.name}</span>
+                  
+//                   {child.type === 'tree' && child.children && child.children.length > 0 && (
+//                     <div 
+//                       className="tooltip"
+//                       style={{
+//                         position: 'fixed',
+//                         left: `${mousePos.x + 15}px`,
+//                         top: `${mousePos.y + 15}px`
+//                       }}
+//                     >
+//                       <strong>Sub-folder Contents:</strong>
+//                       <ul>
+//                         {child.children.map((sub, j) => (
+//                           <li key={j}>• {sub.name}</li>
+//                         ))}
+//                       </ul>
+//                     </div>
+//                   )}
+//                 </li>
+//               ))}
+//             </ul>
+
+//             <div className="activity">
+//               <small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default App;
+
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
@@ -350,12 +586,14 @@ function App() {
   // --- Configuration & UI State ---
   const [config, setConfig] = useState({ token: '', owner: '' });
   const [isConnected, setIsConnected] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); // Added search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortType, setSortType] = useState("alphabetical"); // Sort state moved here
   
   const [repoList, setRepoList] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoData, setRepoData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const handleConnect = () => {
     if (!config.token || !config.owner) {
@@ -385,25 +623,21 @@ function App() {
   const handleSelectRepo = async (repoName) => {
     setLoading(true);
     setSelectedRepo(repoName);
-    
     try {
       const response = await fetch(
         `http://localhost:8000/tree?owner=${config.owner}&repo=${repoName}&token=${config.token}`
       );
       const data = await response.json();
-      
       const processed = {};
       data.tree.forEach(node => {
         if (node.type === "tree") {
           processed[node.name] = {
             status: node.status || "success",
-            // Store full child objects to access their nested children later
             children: node.children || [], 
             lastUpdated: node.last_modified || new Date().toISOString()
           };
         }
       });
-
       setRepoData(processed);
       setLoading(false);
     } catch (error) {
@@ -412,31 +646,34 @@ function App() {
     }
   };
 
-  // Filter repos based on search input
-  const filteredRepos = repoList.filter(repo => 
-    repo.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // --- Logic to Filter and Sort Repositories ---
+  const getFilteredAndSortedRepos = () => {
+    let filtered = repoList.filter(repo => 
+      repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-  // --- VIEW 1: CONFIGURATION / LANDING PAGE ---
+    switch (sortType) {
+      case "alphabetical":
+        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+      case "reverse":
+        return filtered.sort((a, b) => b.name.localeCompare(a.name));
+      case "recent":
+        // GitHub API returns 'updated_at' for repositories
+        return filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+      default:
+        return filtered;
+    }
+  };
+
+  // --- VIEW 1: LANDING PAGE ---
   if (!selectedRepo) {
     return (
       <div className="landing-page">
         <h1>GitHub Repo Visualizer</h1>
-        
         {!isConnected ? (
           <div className="config-form">
-            <input 
-              type="text" 
-              placeholder="GitHub Owner" 
-              value={config.owner}
-              onChange={(e) => setConfig({...config, owner: e.target.value})}
-            />
-            <input 
-              type="password" 
-              placeholder="Personal Access Token" 
-              value={config.token}
-              onChange={(e) => setConfig({...config, token: e.target.value})}
-            />
+            <input type="text" placeholder="GitHub Owner" value={config.owner} onChange={(e) => setConfig({...config, owner: e.target.value})} />
+            <input type="password" placeholder="Personal Access Token" value={config.token} onChange={(e) => setConfig({...config, token: e.target.value})} />
             <button onClick={handleConnect}>Connect to GitHub</button>
           </div>
         ) : (
@@ -446,22 +683,29 @@ function App() {
               <button className="small-btn" onClick={() => setIsConnected(false)}>Change User</button>
             </div>
 
-            <div className="search-container">
-              <input 
-                type="text" 
-                placeholder="Search repositories..." 
-                className="search-bar"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="landing-controls">
+              <div className="search-container">
+                <input type="text" placeholder="Search repositories..." className="search-bar" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              </div>
+
+              {/* MOVED: Sort By added to Repository Page */}
+              <div className="filter-menu">
+                <label>Sort By: </label>
+                <select value={sortType} onChange={(e) => setSortType(e.target.value)}>
+                  <option value="alphabetical">Alphabetical (A-Z)</option>
+                  <option value="reverse">Reverse Alphabetical (Z-A)</option>
+                  <option value="recent">Most Recent</option>
+                </select>
+              </div>
             </div>
 
             <div className="repo-list">
-              {filteredRepos.length > 0 ? (
-                filteredRepos.map(repo => (
+              {getFilteredAndSortedRepos().length > 0 ? (
+                getFilteredAndSortedRepos().map(repo => (
                   <div key={repo.id} className="repo-card" onClick={() => handleSelectRepo(repo.name)}>
                     <h3>{repo.name}</h3>
                     <p>{repo.description || "No description provided."}</p>
+                    <small className="last-updated">Last pushed: {new Date(repo.pushed_at).toLocaleDateString()}</small>
                   </div>
                 ))
               ) : (
@@ -479,45 +723,38 @@ function App() {
 
   return (
     <div className="dashboard">
+      <div className="dashboard-header-container">
         <button className="back-btn" onClick={() => {setSelectedRepo(null); setRepoData(null); setSearchQuery("");}}>
           ← Back to Projects
         </button>
         <h1>Dashboard: {selectedRepo}</h1>
-        <div className="grid">
-          {repoData && Object.entries(repoData).map(([name, info]) => (
-            <div key={name} className={`card ${info.status}`}>
-               <div className="card-header">
-                 <h2>{name}</h2>
-                 <span className={`status-indicator pulse ${info.status}`}></span>
-               </div>
-               
-               <ul className="item-list">
-                 {info.children.slice(0, 8).map((child, i) => (
-                   <li key={i} className={child.type === 'tree' ? 'has-tooltip' : ''}>
-                     <input type="checkbox" /> 
-                     <span className="item-name">{child.name}</span>
-                     
-                     {/* TOOLTIP: Only renders if the item is a directory with children */}
-                     {child.type === 'tree' && child.children && child.children.length > 0 && (
-                       <div className="tooltip">
-                         <strong>Sub-folder Contents:</strong>
-                         <ul>
-                           {child.children.map((sub, j) => (
-                             <li key={j}>• {sub.name}</li>
-                           ))}
-                         </ul>
-                       </div>
-                     )}
-                   </li>
-                 ))}
-               </ul>
+      </div>
 
-               <div className="activity">
-                 <small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small>
-               </div>
+      <div className="grid">
+        {repoData && Object.entries(repoData).map(([name, info]) => (
+          <div key={name} className={`card ${info.status}`}>
+            <div className="card-header">
+              <h2>{name}</h2>
+              <span className={`status-indicator pulse ${info.status}`}></span>
             </div>
-          ))}
-        </div>
+            <ul className="item-list">
+              {info.children.slice(0, 8).map((child, i) => (
+                <li key={i} className={child.type === 'tree' ? 'has-tooltip' : ''}>
+                  <input type="checkbox" /> 
+                  <span className="item-name">{child.name}</span>
+                  {child.type === 'tree' && child.children && child.children.length > 0 && (
+                    <div className="tooltip">
+                      <strong>Sub-folder Contents:</strong>
+                      <ul>{child.children.map((sub, j) => ( <li key={j}>• {sub.name}</li> ))}</ul>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="activity"><small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small></div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
