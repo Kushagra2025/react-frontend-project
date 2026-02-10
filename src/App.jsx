@@ -139,7 +139,7 @@
 // import './App.css';
 
 // --- CONFIGURATION ---
-// const GITHUB_TOKEN = "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"; 
+// const GITHUB_TOKEN = ""; 
 // const REPO_OWNER = "Mshandev";
 // const REPO_NAME = "Food-Delivery";
 
@@ -246,7 +246,7 @@
 // import './App.css';
 
 // // It's best to handle the token via a secure input on the landing page
-// const GITHUB_TOKEN = "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"; 
+// const GITHUB_TOKEN = ""; 
 // const REPO_OWNER = "AmoghNexTurn";
 
 // function App() {
