@@ -593,7 +593,11 @@ function App() {
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoData, setRepoData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [visibleDescriptions, setVisibleDescriptions] = useState({});
+
+  const [complianceReports, setComplianceReports] = useState({});
+  const [checkingPath, setCheckingPath] = useState(null);
 
   const handleConnect = () => {
     if (!config.token || !config.owner) {
@@ -665,6 +669,15 @@ function App() {
     }
   };
 
+  // New description button added
+  const toggleDescription = (e, repoId) => {
+    e.stopPropagation(); // Prevents clicking the button from selecting the repo
+    setVisibleDescriptions(prev => ({
+      ...prev,
+      [repoId]: !prev[repoId]
+    }));
+  };
+
   // --- VIEW 1: LANDING PAGE ---
   if (!selectedRepo) {
     return (
@@ -703,9 +716,30 @@ function App() {
               {getFilteredAndSortedRepos().length > 0 ? (
                 getFilteredAndSortedRepos().map(repo => (
                   <div key={repo.id} className="repo-card" onClick={() => handleSelectRepo(repo.name)}>
-                    <h3>{repo.name}</h3>
-                    <p>{repo.description || "No description provided."}</p>
-                    <small className="last-updated">Last pushed: {new Date(repo.pushed_at).toLocaleDateString()}</small>
+                    <div className="repo-card-header">
+                      <h3>{repo.name}</h3>
+                      
+                      {/* Description Toggle Button */}
+                      {repo.description && (
+                        <button 
+                          className="desc-toggle-btn"
+                          onClick={(e) => toggleDescription(e, repo.id)}
+                        >
+                          {visibleDescriptions[repo.id] ? "Hide Description" : "Show Description"}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Only show description if toggled on in state */}
+                    {visibleDescriptions[repo.id] && (
+                      <p className="repo-description-text">
+                        {repo.description}
+                      </p>
+                    )}
+                    
+                    <small className="last-updated">
+                      Last pushed: {new Date(repo.pushed_at).toLocaleDateString()}
+                    </small>
                   </div>
                 ))
               ) : (
@@ -737,20 +771,33 @@ function App() {
               <h2>{name}</h2>
               <span className={`status-indicator pulse ${info.status}`}></span>
             </div>
-            <ul className="item-list">
-              {info.children.slice(0, 8).map((child, i) => (
-                <li key={i} className={child.type === 'tree' ? 'has-tooltip' : ''}>
-                  <input type="checkbox" /> 
-                  <span className="item-name">{child.name}</span>
-                  {child.type === 'tree' && child.children && child.children.length > 0 && (
-                    <div className="tooltip">
-                      <strong>Sub-folder Contents:</strong>
-                      <ul>{child.children.map((sub, j) => ( <li key={j}>• {sub.name}</li> ))}</ul>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+            // ... inside your grid mapping ...
+              <ul className="item-list">
+                {info.children.slice(0, 8).map((child, i) => (
+                  <li 
+                    key={i} 
+                    className={child.type === 'tree' ? 'has-tooltip' : ''}
+                  >
+                    {/* ADDED: Icon Logic instead of Checkboxes */}
+                    <span className="item-icon">
+                      {child.type === 'tree' ? '📁' : '📄'}
+                    </span>
+                    
+                    <span className="item-name">{child.name}</span>
+                    
+                    {child.type === 'tree' && child.children && child.children.length > 0 && (
+                      <div className="tooltip">
+                        <strong>Sub-folder Contents:</strong>
+                        <ul>
+                          {child.children.map((sub, j) => (
+                            <li key={j}>• {sub.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
             <div className="activity"><small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small></div>
           </div>
         ))}
