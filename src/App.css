@@ -428,3 +428,73 @@ html, body, #root {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Container for the Natural Language Report */
+.compliance-container {
+  background: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 10px;
+  margin: 15px 0;
+  padding: 15px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.compliance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.compliance-header h4 {
+  font-size: 0.85rem;
+  color: #2c3e50;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.close-link {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Individual Result Lines */
+.compliance-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.compliance-line p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #444;
+}
+
+/* Status Specific Colors */
+.compliance-line.pass { background-color: #f0fff4; }
+.compliance-line.fail { background-color: #fff5f5; }
+.compliance-line.info { background-color: #f0f7ff; }
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.pass .status-dot { background-color: #28a745; }
+.fail .status-dot { background-color: #dc3545; }
+.info .status-dot { background-color: #007bff; }

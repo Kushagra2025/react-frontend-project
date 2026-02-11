@@ -678,6 +678,28 @@ function App() {
     }));
   };
 
+  // New Compliance check function
+  const handleRunCompliance = async (path) => {
+    setCheckingPath(path); // Show loading state for this specific card
+    try {
+      const response = await fetch(
+        `http://localhost:8000/run-compliance?owner=${config.owner}&repo=${selectedRepo}&path=${path}&token=${config.token}`,
+        { method: 'POST' }
+      );
+      const data = await response.json();
+      
+      setComplianceReports(prev => ({
+        ...prev,
+        [path]: data.report
+      }));
+    } catch (error) {
+      console.error("Compliance check failed:", error);
+      alert("Error running compliance check.");
+    } finally {
+      setCheckingPath(null);
+    }
+  };
+
   // --- VIEW 1: LANDING PAGE ---
   if (!selectedRepo) {
     return (
@@ -769,8 +791,40 @@ function App() {
           <div key={name} className={`card ${info.status}`}>
             <div className="card-header">
               <h2>{name}</h2>
-              <span className={`status-indicator pulse ${info.status}`}></span>
+              <button 
+                className="compliance-btn"
+                onClick={() => handleRunCompliance(name)}
+                disabled={checkingPath === name}
+              >
+                {checkingPath === name ? "Checking..." : "🛡️ Run Compliance"}
+              </button>
             </div>
+            {/* Display the report if it exists */}
+            {complianceReports[name] && (
+              <div className="compliance-container">
+                <div className="compliance-header">
+                  <h4>Compliance Overview</h4>
+                  <button className="close-link" onClick={() => setComplianceReports(prev => ({...prev, [name]: null}))}>Clear</button>
+                </div>
+                
+                <div className="compliance-body">
+                  {complianceReports[name]
+                    .split('\n')
+                    .filter(line => line.trim() && !line.includes('==')) // Remove empty lines and separators
+                    .map((line, index) => {
+                      const isPass = line.includes('[PASS]');
+                      const isFail = line.includes('[FAIL]');
+                      
+                      return (
+                        <div key={index} className={`compliance-line ${isPass ? 'pass' : isFail ? 'fail' : 'info'}`}>
+                          <span className="status-dot"></span>
+                          <p>{line.replace(/\[.*?\]/g, '').trim()}</p>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
             // ... inside your grid mapping ...
               <ul className="item-list">
                 {info.children.slice(0, 8).map((child, i) => (
