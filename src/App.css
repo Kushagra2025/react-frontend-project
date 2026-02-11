@@ -482,6 +482,13 @@ html, body, #root {
   color: #444;
 }
 
+/* .compliance-line.heading p {
+  font-weight: 700 !important;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  margin-top: 10px;
+} */
+
 /* Status Specific Colors */
 .compliance-line.pass { background-color: #f0fff4; }
 .compliance-line.fail { background-color: #fff5f5; }

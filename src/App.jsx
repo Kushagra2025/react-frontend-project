@@ -810,15 +810,24 @@ function App() {
                 <div className="compliance-body">
                   {complianceReports[name]
                     .split('\n')
-                    .filter(line => line.trim() && !line.includes('==')) // Remove empty lines and separators
+                    .filter(line => line.trim() && !line.includes('=='))
                     .map((line, index) => {
+                      const cleanLine = line.replace(/\[.*?\]/g, '').trim();
                       const isPass = line.includes('[PASS]');
                       const isFail = line.includes('[FAIL]');
+                      const isSummary = line.includes('Summary:');
+                      const isUrl = line.includes('URL:');
                       
+                      // Logic: A line is a heading if it's not a Pass, Fail, Summary, or URL result
+                      const isHeading = !isPass && !isFail && !isSummary && !isUrl && !line.includes('Category:');
+
                       return (
-                        <div key={index} className={`compliance-line ${isPass ? 'pass' : isFail ? 'fail' : 'info'}`}>
+                        <div 
+                          key={index} 
+                          className={`compliance-line ${isPass ? 'pass' : isFail ? 'fail' : isHeading ? 'heading' : 'info'}`}
+                        >
                           <span className="status-dot"></span>
-                          <p>{line.replace(/\[.*?\]/g, '').trim()}</p>
+                          <p>{cleanLine}</p>
                         </div>
                       );
                     })}
