@@ -680,7 +680,7 @@ function App() {
           <>
             <div className="user-info">
               <p>Connected as: <strong>{config.owner}</strong></p>
-              <button className="small-btn" onClick={() => setIsConnected(false)}>Change User</button>
+              <button className="small-btn" onClick={() => setIsConnected(false)}>Log Out</button>
             </div>
 
             <div className="landing-controls">
