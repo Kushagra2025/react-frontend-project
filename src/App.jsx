@@ -599,6 +599,9 @@ function App() {
   const [complianceReports, setComplianceReports] = useState({});
   const [checkingPath, setCheckingPath] = useState(null);
 
+  // focus mode for run-compliance
+  const [focusedCard, setFocusedCard] = useState(null);
+
   const handleConnect = () => {
     if (!config.token || !config.owner) {
       alert("Please enter both Owner name and Personal Access Token.");
@@ -680,7 +683,8 @@ function App() {
 
   // New Compliance check function
   const handleRunCompliance = async (path) => {
-    setCheckingPath(path); // Show loading state for this specific card
+    // setCheckingPath(path); // Show loading state for this specific card
+    setFocusedCard(path);
     try {
       const response = await fetch(
         `http://localhost:8000/run-compliance?owner=${config.owner}&repo=${selectedRepo}&path=${path}&token=${config.token}`,
@@ -704,6 +708,11 @@ function App() {
   if (!selectedRepo) {
     return (
       <div className="landing-page">
+        {/* Move this to the top */}
+        <div className="user-info top-right">
+          <span>Connected as: <strong>{config.owner}</strong></span>
+          <button className="small-btn logout-btn" onClick={() => setIsConnected(false)}>Log Out</button>
+        </div>
         <h1>GitHub Repo Visualizer</h1>
         {!isConnected ? (
           <div className="config-form">
@@ -713,11 +722,10 @@ function App() {
           </div>
         ) : (
           <>
-            <div className="user-info">
+            {/* <div className="user-info">
               <p>Connected as: <strong>{config.owner}</strong></p>
               <button className="small-btn" onClick={() => setIsConnected(false)}>Log Out</button>
-            </div>
-
+            </div> */}
             <div className="landing-controls">
               <div className="search-container">
                 <input type="text" placeholder="Search repositories..." className="search-bar" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -780,90 +788,112 @@ function App() {
   return (
     <div className="dashboard">
       <div className="dashboard-header-container">
-        <button className="back-btn" onClick={() => {setSelectedRepo(null); setRepoData(null); setSearchQuery("");}}>
+        <button 
+          className="back-btn" 
+          onClick={() => {setSelectedRepo(null); setRepoData(null); setSearchQuery(""); setFocusedCard(null);}}
+        >
           ← Back to Projects
         </button>
         <h1>Dashboard: {selectedRepo}</h1>
       </div>
 
-      <div className="grid">
-        {repoData && Object.entries(repoData).map(([name, info]) => (
-          <div key={name} className={`card ${info.status}`}>
-            <div className="card-header">
-              <h2>{name}</h2>
-              <button 
-                className="compliance-btn"
-                onClick={() => handleRunCompliance(name)}
-                disabled={checkingPath === name}
-              >
-                {checkingPath === name ? "Checking..." : "🛡️ Run Compliance"}
-              </button>
-            </div>
-            {/* Display the report if it exists */}
-            {complianceReports[name] && (
-              <div className="compliance-container">
-                <div className="compliance-header">
-                  <h4>Compliance Overview</h4>
-                  <button className="close-link" onClick={() => setComplianceReports(prev => ({...prev, [name]: null}))}>Clear</button>
-                </div>
-                
-                <div className="compliance-body">
-                  {complianceReports[name]
-                    .split('\n')
-                    .filter(line => line.trim() && !line.includes('=='))
-                    .map((line, index) => {
-                      const cleanLine = line.replace(/\[.*?\]/g, '').trim();
-                      const isPass = line.includes('[PASS]');
-                      const isFail = line.includes('[FAIL]');
-                      const isSummary = line.includes('Summary:');
-                      const isUrl = line.includes('URL:');
-                      
-                      // Logic: A line is a heading if it's not a Pass, Fail, Summary, or URL result
-                      const isHeading = !isPass && !isFail && !isSummary && !isUrl && !line.includes('Category:');
+      {/* New wrapper for the split view logic */}
+      <div className={`dashboard-container ${focusedCard ? 'split-view' : ''}`}>
+        
+        {/* Left Section: Either the grid or a single focused card */}
+        <div className="main-content">
+          <div className={focusedCard ? 'solo-card' : 'grid'}>
+            {repoData && Object.entries(repoData)
+              .filter(([name]) => !focusedCard || name === focusedCard) // Focus logic
+              .map(([name, info]) => (
+                <div key={name} className={`card ${info.status}`}>
+                  <div className="card-header">
+                    <h2>{name}</h2>
+                    <button 
+                      className="compliance-btn"
+                      onClick={() => handleRunCompliance(name)}
+                      disabled={checkingPath === name}
+                    >
+                      {checkingPath === name ? "Checking..." : "🛡️ Run Compliance"}
+                    </button>
+                  </div>
 
-                      return (
-                        <div 
-                          key={index} 
-                          className={`compliance-line ${isPass ? 'pass' : isFail ? 'fail' : isHeading ? 'heading' : 'info'}`}
-                        >
-                          <span className="status-dot"></span>
-                          <p>{cleanLine}</p>
-                        </div>
-                      );
-                    })}
+                  <ul className="item-list">
+                    {info.children.slice(0, 8).map((child, i) => (
+                      <li key={i} className={child.type === 'tree' ? 'has-tooltip' : ''}>
+                        <span className="item-icon">{child.type === 'tree' ? '📁' : '📄'}</span>
+                        <span className="item-name">{child.name}</span>
+                        
+                        {child.type === 'tree' && child.children && child.children.length > 0 && (
+                          <div className="tooltip">
+                            <strong>Sub-folder Contents:</strong>
+                            <ul>
+                              {child.children.map((sub, j) => <li key={j}>• {sub.name}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="activity">
+                    <small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small>
+                  </div>
                 </div>
-              </div>
-            )}
-            // ... inside your grid mapping ...
-              <ul className="item-list">
-                {info.children.slice(0, 8).map((child, i) => (
-                  <li 
-                    key={i} 
-                    className={child.type === 'tree' ? 'has-tooltip' : ''}
-                  >
-                    {/* ADDED: Icon Logic instead of Checkboxes */}
-                    <span className="item-icon">
-                      {child.type === 'tree' ? '📁' : '📄'}
-                    </span>
-                    
-                    <span className="item-name">{child.name}</span>
-                    
-                    {child.type === 'tree' && child.children && child.children.length > 0 && (
-                      <div className="tooltip">
-                        <strong>Sub-folder Contents:</strong>
-                        <ul>
-                          {child.children.map((sub, j) => (
-                            <li key={j}>• {sub.name}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            <div className="activity"><small>Last Update: {new Date(info.lastUpdated).toLocaleString()}</small></div>
+              ))}
           </div>
-        ))}
+        </div>
+
+        {/* Right Section: The Compliance Side Panel */}
+        {focusedCard && (
+          <div className="side-panel">
+            <div className="panel-header">
+              <h3 style={{ margin: 0, color: '#000000' }}>
+                {/* Logic to determine emoji based on pass rate */}
+                {(() => {
+                  const reportText = complianceReports[focusedCard] || "";
+                  // Extract numbers from "X/Y checks passed"
+                  const match = reportText.match(/(\d+)\/(\d+)\s+checks\s+passed/i);
+                  if (match) {
+                    const passed = parseInt(match[1]);
+                    const total = parseInt(match[2]);
+                    return passed === total ? "✅ " : "⚠️ ";
+                  }
+                  return "📋 "; // Default icon while loading or if no summary found
+                })()}
+                Compliance Report: {focusedCard}
+              </h3>
+              <button className="close-panel" onClick={() => setFocusedCard(null)}>×</button>
+            </div>
+            <div className="panel-body">
+              {complianceReports[focusedCard] ? (
+                <div className="compliance-container">
+                  <div className="compliance-body">
+                    {complianceReports[focusedCard]
+                      .split('\n')
+                      .filter(line => line.trim() && !line.includes('=='))
+                      .map((line, index) => {
+                        const cleanLine = line.replace(/\[.*?\]/g, '').trim();
+                        const isPass = line.includes('[PASS]');
+                        const isFail = line.includes('[FAIL]');
+                        const isSummary = line.includes('Summary:');
+                        const isUrl = line.includes('URL:');
+                        const isHeading = !isPass && !isFail && !isSummary && !isUrl && !line.includes('Category:');
+
+                        return (
+                          <div key={index} className={`compliance-line ${isPass ? 'pass' : isFail ? 'fail' : isHeading ? 'heading' : 'info'}`}>
+                            <span className="status-dot"></span>
+                            <p>{cleanLine}</p>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              ) : (
+                <p className="loading-text">Fetching latest compliance data...</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

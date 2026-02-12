@@ -248,6 +248,18 @@ html, body, #root {
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
+/* Target the placeholder text specifically */
+.search-bar::placeholder {
+  color: #bbbbbb;      /* Brighter grey/off-white */
+  opacity: 1;          /* Firefox requires this to show the full color */
+  font-weight: 500;    /* Slightly thicker for better legibility */
+}
+
+/* Optional: Brighter color when the user clicks into the bar */
+.search-bar:focus::placeholder {
+  color: #ffffff;
+}
+
 /* Tooltip Logic - Reverted to Static Side Positioning */
 .has-tooltip {
   position: relative;
@@ -505,3 +517,145 @@ html, body, #root {
 .pass .status-dot { background-color: #28a745; }
 .fail .status-dot { background-color: #dc3545; }
 .info .status-dot { background-color: #007bff; }
+
+
+
+/* Layout Wrapper */
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  max-width: 1800px;
+  gap: 30px;
+  transition: all 0.4s ease;
+  align-items: flex-start;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  transition: all 0.4s ease;
+}
+
+/* When split view is active, constrain the left side */
+.split-view .main-content {
+  flex: 0 0 400px; /* Card stays on the left at a fixed width */
+}
+
+/* The Side Panel */
+.side-panel {
+  flex: 1;
+  background: white;
+  border-radius: 15px;
+  border: 1px solid #e1e4e8;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+.panel-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.close-panel {
+  background: #eee;
+  border: none;
+  font-size: 1.5rem;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Update these specific classes in your App.css */
+
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  max-width: 100%; /* Ensures it uses full screen width */
+  gap: 20px;
+  padding: 20px;
+  transition: all 0.4s ease;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+/* Side Panel Positioning and Visibility */
+.side-panel {
+  flex: 1;
+  background: white;
+  border-radius: 15px;
+  border: 1px solid #e1e4e8;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+  height: calc(100vh - 180px); /* Adjusts height relative to your header */
+  display: flex;
+  flex-direction: column;
+  position: sticky; /* Keeps it in view while scrolling cards */
+  top: 20px;
+  animation: slideIn 0.3s ease-out;
+}
+
+/* MODIFIED: High-visibility Close Button */
+.close-panel {
+  background: #2c3e50; /* Matches your 'Back to Projects' button color */
+  color: #ffffff;      /* Bright white for the X icon */
+  border: none;
+  font-size: 1.2rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.close-panel:hover {
+  background: #dc3545; /* Turns red on hover for clarity */
+}
+
+/* Specifically target the side panel's title */
+.panel-header h3 {
+  color: #000000 !important; /* Forces the text to black */
+  font-weight: 700;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.user-info.top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logout-btn {
+  background: #6c757d;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #5a6268;
+}
